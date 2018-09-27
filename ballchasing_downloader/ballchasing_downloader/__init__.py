@@ -7,6 +7,7 @@ from enum import Enum
 import functools
 
 date_fmt = '%Y-%m-%d %H:%M'
+upload_date_re = re.compile('.* \(([\d\-: ]*)\)')
 
 class VersusType(Enum):
     DUEL = 1
@@ -50,7 +51,8 @@ class PlayerInfo(NamedTuple):
 class MatchInfo(NamedTuple):
     id: str
     title: str
-    date: datetime
+    match_date: datetime
+    upload_date: datetime
     blue_players: Set[PlayerInfo]
     orange_players: Set[PlayerInfo]
     game_type: str = None
@@ -64,10 +66,15 @@ def parse_div(div: pq.PyQuery) -> MatchInfo:
     tags_divs = div(".replay-meta .tag")
     blue_players_divs = div(".blue.team > .player")
     orange_players_divs = div(".orange.team > .player")
-    date_div = div('.extra-info').children().filter(
+    match_date_div = div('.extra-info').children().filter(
         lambda i : pq.PyQuery(this).attr('title') == 'Date')
+    upload_date_div = div('.uploader')
     
-    date = datetime.strptime(date_div.text(), date_fmt)
+
+    match_date = datetime.strptime(match_date_div.text(), date_fmt)
+    upload_date = datetime.strptime(
+        upload_date_re.match(upload_date_div.text()).groups()[0],
+        date_fmt)
     title = title_div.html().strip()
     id = title_div.attr('href').replace('/replay/', '')
     parsed_tags : Dict = parse_tags(tags_divs)
@@ -75,7 +82,8 @@ def parse_div(div: pq.PyQuery) -> MatchInfo:
     orange_players = set(orange_players_divs.map(parse_player))
 
     return MatchInfo(id=id, title=title, 
-                     date=date,
+                     match_date=match_date,
+                     upload_date=upload_date,
                      blue_players=blue_players,
                      orange_players=orange_players,
                      **parsed_tags)
