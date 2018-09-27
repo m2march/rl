@@ -1,6 +1,8 @@
 import pytest
 import os
+import json
 from ballchasing_downloader import *
+from ballchasing_downloader import mapper
 import pyquery as pq
 
 class ParsedDiv(NamedTuple):
@@ -63,3 +65,15 @@ parsed_divs_ids = ['full', 'unranked']
 @pytest.mark.parametrize('pd', parsed_divs, ids=parsed_divs_ids)
 def test_parse_div(pd: ParsedDiv):
     assert parse_div(pq.PyQuery(pd.div)) == pd.info
+
+
+def test_match_info_to_json():
+    mi = MatchInfo(id='id', title='title', 
+                   versus_type=VersusType.DOUBLES,
+                   game_type='type',
+                   ranked=True, season=8,
+                   blue_players={PlayerInfo('p1', None, Platform.PS4)},
+                   orange_players={PlayerInfo('p2', None, Platform.PS4)})
+    out = json.dumps(mi, cls=mapper.NamedTupleEncoder)
+    d = json.loads(out) 
+    assert mi == mapper.parse_nt(d, MatchInfo)

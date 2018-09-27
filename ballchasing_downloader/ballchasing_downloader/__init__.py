@@ -1,4 +1,5 @@
 import pyquery as pq
+from mypy_extensions import TypedDict
 from typing import *
 from datetime import datetime
 import re
@@ -38,7 +39,7 @@ class Platform(Enum):
             return None
 
 
-class PlayerInfo(NamedTuple):
+class PlayerInfo(amedTuple):
     id: str
     rank: Optional[str]
     platform: Platform
@@ -96,3 +97,4 @@ def parse_player(idx: int, player_elem) -> PlayerInfo:
     rank = player_div(".player-rank").attr("title")
     id = player_div.text()
     return PlayerInfo(id, rank, platform)
+
