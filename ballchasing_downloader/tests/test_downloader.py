@@ -7,7 +7,6 @@ class ParsedDiv(NamedTuple):
     div: str
     info: MatchInfo
 
-@pytest.fixture
 def full_2v2_div() -> ParsedDiv:
     with open(os.path.join(os.path.dirname(__file__), 
                            'full_2v2_div.html')) as f:
@@ -31,6 +30,36 @@ def full_2v2_div() -> ParsedDiv:
     )
     return ParsedDiv(div, info)
 
+def unranked_4v4_div() -> ParsedDiv:
+    with open(os.path.join(os.path.dirname(__file__),
+                           'unranked_4v4_div.html')) as f:
+        div = f.read()
 
-def test_parse_div(full_2v2_div: ParsedDiv):
-    assert parse_div(pq.PyQuery(full_2v2_div.div)) == full_2v2_div.info
+    info = MatchInfo(
+        id = '23c4c1a1-659a-453a-9fd8-0948b17d9303',
+        title = 'FE25414145E807674CA5C9AA9254AD58',
+        versus_type = VersusType.CHAOS,
+        game_type = 'Chaos',
+        ranked = False,
+        season = 8,
+        blue_players = {
+            PlayerInfo('digger_hero | hellcase.com', None, Platform.PC),
+            PlayerInfo('KK_Ultra_14', None, Platform.PC),
+            PlayerInfo('danny_2604', None, Platform.PC),
+            PlayerInfo('basti_2411', None, Platform.PC)
+        },
+        orange_players = {
+            PlayerInfo('Element', None, Platform.PC),
+            PlayerInfo('To Wcale Nie Kenny', None, Platform.PC),
+            PlayerInfo('Koov1', None, Platform.PC),
+            PlayerInfo('Locowsky', None, Platform.PC)
+        }
+    )
+    return ParsedDiv(div, info)
+
+parsed_divs = [full_2v2_div(), unranked_4v4_div()]
+parsed_divs_ids = ['full', 'unranked']
+
+@pytest.mark.parametrize('pd', parsed_divs, ids=parsed_divs_ids)
+def test_parse_div(pd: ParsedDiv):
+    assert parse_div(pq.PyQuery(pd.div)) == pd.info
