@@ -1,4 +1,5 @@
 import typing as ty
+import datetime
 import collections
 import enum
 import json
@@ -18,6 +19,8 @@ class NamedTupleEncoder(json.JSONEncoder):
             for key, val in obj.items():
                 obj[key] = self.to_dict(val)
             return obj
+        if isinstance(obj, datetime.datetime):
+            return obj.timestamp()
         if isinstance(obj, str):
             return obj
         if isinstance(obj, collections.Iterable):
@@ -42,6 +45,8 @@ def parse_nt(d, cls):
             return [parse_nt(x, cls.__args__[0]) for x in d]
     elif issubclass(cls, enum.Enum):
         return cls(d)
+    elif cls is datetime.datetime:
+        return datetime.datetime.fromtimestamp(d)
     elif '__annotations__' in dir(cls):
         if not isinstance(d, dict):
             raise TupleDecodingError(('Required attribute {} not found in '

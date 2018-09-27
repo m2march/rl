@@ -19,6 +19,7 @@ def full_2v2_div() -> ParsedDiv:
         title = "90",
         versus_type = VersusType.DOUBLES,
         game_type = 'Doubles',
+        date = datetime.strptime('2018-09-21 15:15', date_fmt),
         ranked = True,
         season = 8,
         blue_players = {
@@ -42,6 +43,7 @@ def unranked_4v4_div() -> ParsedDiv:
         title = 'FE25414145E807674CA5C9AA9254AD58',
         versus_type = VersusType.CHAOS,
         game_type = 'Chaos',
+        date = datetime.strptime('2018-08-31 23:14', date_fmt),
         ranked = False,
         season = 8,
         blue_players = {
@@ -71,6 +73,7 @@ def test_match_info_to_json():
     mi = MatchInfo(id='id', title='title', 
                    versus_type=VersusType.DOUBLES,
                    game_type='type',
+                   date = datetime.now(),
                    ranked=True, season=8,
                    blue_players={PlayerInfo('p1', None, Platform.PS4)},
                    orange_players={PlayerInfo('p2', None, Platform.PS4)})

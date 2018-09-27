@@ -6,6 +6,8 @@ import re
 from enum import Enum
 import functools
 
+date_fmt = '%Y-%m-%d %H:%M'
+
 class VersusType(Enum):
     DUEL = 1
     DOUBLES = 2
@@ -39,7 +41,7 @@ class Platform(Enum):
             return None
 
 
-class PlayerInfo(amedTuple):
+class PlayerInfo(NamedTuple):
     id: str
     rank: Optional[str]
     platform: Platform
@@ -48,6 +50,7 @@ class PlayerInfo(amedTuple):
 class MatchInfo(NamedTuple):
     id: str
     title: str
+    date: datetime
     blue_players: Set[PlayerInfo]
     orange_players: Set[PlayerInfo]
     game_type: str = None
@@ -61,7 +64,10 @@ def parse_div(div: pq.PyQuery) -> MatchInfo:
     tags_divs = div(".replay-meta .tag")
     blue_players_divs = div(".blue.team > .player")
     orange_players_divs = div(".orange.team > .player")
+    date_div = div('.extra-info').children().filter(
+        lambda i : pq.PyQuery(this).attr('title') == 'Date')
     
+    date = datetime.strptime(date_div.text(), date_fmt)
     title = title_div.html().strip()
     id = title_div.attr('href').replace('/replay/', '')
     parsed_tags : Dict = parse_tags(tags_divs)
@@ -69,6 +75,7 @@ def parse_div(div: pq.PyQuery) -> MatchInfo:
     orange_players = set(orange_players_divs.map(parse_player))
 
     return MatchInfo(id=id, title=title, 
+                     date=date,
                      blue_players=blue_players,
                      orange_players=orange_players,
                      **parsed_tags)
@@ -90,11 +97,9 @@ def parse_tags(tags: pq.PyQuery):
     tags.map(read_tag)
     return ret_dict
 
-
 def parse_player(idx: int, player_elem) -> PlayerInfo:
     player_div = pq.PyQuery(player_elem)
     platform = Platform.from_str(player_div(".player-platform").attr('title'))
     rank = player_div(".player-rank").attr("title")
     id = player_div.text()
     return PlayerInfo(id, rank, platform)
-
