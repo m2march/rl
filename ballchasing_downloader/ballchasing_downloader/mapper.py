@@ -4,33 +4,27 @@ import collections
 import enum
 import json
 
-class TupleDecodingError(TypeError):
-    pass
-
-class NamedTupleEncoder(json.JSONEncoder):
-
-    def named_tuple_to_dict(self, nt):
-        return dict(zip(nt.__annotations__.keys(), nt))
-
-    def to_dict(self, obj):
+def named_tuple_to_dict(obj):
         # Proxy to isinstance(obj, NamedTuple)
         if '__annotations__' in dir(obj): 
-            obj = self.named_tuple_to_dict(obj)
+            obj = dict(zip(obj.__annotations__.keys(), obj))
             for key, val in obj.items():
-                obj[key] = self.to_dict(val)
+                obj[key] = named_tuple_to_dict(val)
             return obj
         if isinstance(obj, datetime.datetime):
             return obj.timestamp()
         if isinstance(obj, str):
             return obj
         if isinstance(obj, collections.Iterable):
-            return list([self.to_dict(x) for x in obj])
+            return list([named_tuple_to_dict(x) for x in obj])
         if isinstance(obj, enum.Enum):
             return obj.value
         return obj
 
+class NamedTupleEncoder(json.JSONEncoder):
+
     def encode(self, obj):
-        return json.JSONEncoder.encode(self, self.to_dict(obj))
+        return json.JSONEncoder.encode(self, self.named_tuple_to_dict(obj))
 
 
 def parse_nt(d, cls):

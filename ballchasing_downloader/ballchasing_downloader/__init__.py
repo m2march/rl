@@ -1,13 +1,16 @@
 import pyquery as pq
+import requests
 from mypy_extensions import TypedDict
 from typing import *
 from datetime import datetime
 import re
 from enum import Enum
 import functools
+from ballchasing_downloader import ranks
 
 date_fmt = '%Y-%m-%d %H:%M'
 upload_date_re = re.compile('.* \(([\d\-: ]*)\)')
+ballchasing_url_temp = 'https://ballchasing.com/?after={after_id}'
 
 class VersusType(Enum):
     DUEL = 1
@@ -44,7 +47,7 @@ class Platform(Enum):
 
 class PlayerInfo(NamedTuple):
     id: str
-    rank: Optional[str]
+    rank: ranks.RLRank
     platform: Platform
 
 
@@ -108,6 +111,14 @@ def parse_tags(tags: pq.PyQuery):
 def parse_player(idx: int, player_elem) -> PlayerInfo:
     player_div = pq.PyQuery(player_elem)
     platform = Platform.from_str(player_div(".player-platform").attr('title'))
-    rank = player_div(".player-rank").attr("title")
+    rank = ranks.RLRank.from_string(player_div(".player-rank").attr("title"))
     id = player_div.text()
     return PlayerInfo(id, rank, platform)
+
+
+def retreive_infos(after_id='') -> List[MatchInfo]:
+    resp = requests.get(ballchasing_url_temp.format(after_id=after_id))
+    page = pq.PyQuery(resp.text)
+    all_infos = page('.creplays > li').map(
+        lambda i, x: parse_div(pq.PyQuery(x)))
+    return all_infos

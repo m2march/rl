@@ -2,6 +2,7 @@ import pytest
 import os
 import json
 from ballchasing_downloader import *
+from ballchasing_downloader.ranks import * 
 from ballchasing_downloader import mapper
 import pyquery as pq
 
@@ -24,12 +25,12 @@ def full_2v2_div() -> ParsedDiv:
         ranked = True,
         season = 8,
         blue_players = {
-            PlayerInfo('TankDS', 'Champion I Division 3', Platform.PC),
-            PlayerInfo('Thorgrim102', 'Unranked', Platform.PC),
+            PlayerInfo('TankDS', NumericRank(Category.Champion, 1, 3), Platform.PC),
+            PlayerInfo('Thorgrim102', Unranked(), Platform.PC),
         },
         orange_players = {
-            PlayerInfo('Pasi', 'Champion I Division 3', Platform.PC),
-            PlayerInfo('Gonzo', 'Champion II Division 1', Platform.PC)
+            PlayerInfo('Pasi', NumericRank(Category.Champion, 1, 3), Platform.PC),
+            PlayerInfo('Gonzo', NumericRank(Category.Champion, 2, 1), Platform.PC)
         }
     )
     return ParsedDiv(div, info)
@@ -49,16 +50,16 @@ def unranked_4v4_div() -> ParsedDiv:
         ranked = False,
         season = 8,
         blue_players = {
-            PlayerInfo('digger_hero | hellcase.com', None, Platform.PC),
-            PlayerInfo('KK_Ultra_14', None, Platform.PC),
-            PlayerInfo('danny_2604', None, Platform.PC),
-            PlayerInfo('basti_2411', None, Platform.PC)
+            PlayerInfo('digger_hero | hellcase.com', Unranked(), Platform.PC),
+            PlayerInfo('KK_Ultra_14', Unranked(), Platform.PC),
+            PlayerInfo('danny_2604', Unranked(), Platform.PC),
+            PlayerInfo('basti_2411', Unranked(), Platform.PC)
         },
         orange_players = {
-            PlayerInfo('Element', None, Platform.PC),
-            PlayerInfo('To Wcale Nie Kenny', None, Platform.PC),
-            PlayerInfo('Koov1', None, Platform.PC),
-            PlayerInfo('Locowsky', None, Platform.PC)
+            PlayerInfo('Element', Unranked(), Platform.PC),
+            PlayerInfo('To Wcale Nie Kenny', Unranked(), Platform.PC),
+            PlayerInfo('Koov1', Unranked(), Platform.PC),
+            PlayerInfo('Locowsky', Unranked(), Platform.PC)
         }
     )
     return ParsedDiv(div, info)
@@ -80,6 +81,5 @@ def test_match_info_to_json():
                    ranked=True, season=8,
                    blue_players={PlayerInfo('p1', None, Platform.PS4)},
                    orange_players={PlayerInfo('p2', None, Platform.PS4)})
-    out = json.dumps(mi, cls=mapper.NamedTupleEncoder)
-    d = json.loads(out) 
+    d = mapper.named_tuple_to_dict(mi) 
     assert mi == mapper.parse_nt(d, MatchInfo)
