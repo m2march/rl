@@ -1,4 +1,5 @@
 import typing as ty
+from ballchasing_downloader import ranks
 import datetime
 import collections
 import enum
@@ -19,6 +20,8 @@ def named_tuple_to_dict(obj):
             return list([named_tuple_to_dict(x) for x in obj])
         if isinstance(obj, enum.Enum):
             return obj.value
+        if isinstance(obj, ranks.RLRank):
+            return obj.__repr__()
         return obj
 
 class NamedTupleEncoder(json.JSONEncoder):
@@ -48,4 +51,6 @@ def parse_nt(d, cls):
         hints = ty.get_type_hints(cls)
         return cls(**{key: parse_nt(d[key], sub_cls)
                       for key, sub_cls in hints.items()})
+    elif issubclass(cls, ranks.RLRank):
+        return ranks.RLRank.from_string(d)
     return d

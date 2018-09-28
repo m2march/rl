@@ -111,7 +111,12 @@ def parse_tags(tags: pq.PyQuery):
 def parse_player(idx: int, player_elem) -> PlayerInfo:
     player_div = pq.PyQuery(player_elem)
     platform = Platform.from_str(player_div(".player-platform").attr('title'))
-    rank = ranks.RLRank.from_string(player_div(".player-rank").attr("title"))
+    try:
+        rank = ranks.RLRank.from_string(
+            player_div(".player-rank").attr("title"))
+    except ranks.RankParsingError as rpe:
+        print(rpe)
+        rank = ranks.Unranked()
     id = player_div.text()
     return PlayerInfo(id, rank, platform)
 

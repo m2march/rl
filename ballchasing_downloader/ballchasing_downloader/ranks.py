@@ -92,17 +92,22 @@ class NumericRank(RLRank):
         if text == 'Grand Champion':
             return NumericRank(Category.GrandChampion, 1, 1)
 
-        cat_text, sub_text, _, div_text = text.split(' ')
-        category = Category.from_string(cat_text)
-        subcategory = NumericRank.__count_i(sub_text)
-        division = int(div_text)
+        try:
+            cat_text, sub_text, _, div_text = text.split(' ')
+            category = Category.from_string(cat_text)
+            subcategory = NumericRank.__count_i(sub_text)
+            division = int(div_text)
+        except Exception as e:
+            raise RankParsingError(
+                'Not a suitable rank description: {}'.format(
+                    text)) from e
         return NumericRank(category, subcategory, division)
 
 
     def __repr__(self):
-        return '<RLRank: {} {} div {}>'.format(self.category.name,
-                                               self.subcategory,
-                                               self.division)
+        return '{} {} div {}'.format(self.category.name,
+                                     self.subcategory,
+                                     self.division)
 
     def __as_tuple(self) -> List[int]:
         return (self.category.value, self.subcategory, self.division)
