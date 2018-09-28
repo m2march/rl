@@ -98,12 +98,21 @@ def parse_tags(tags: pq.PyQuery):
     def read_tag(idx: int, tag_elem):
         tag = pq.PyQuery(tag_elem).text()
         if tag.find('Season') >= 0:
-            ret_dict['season'] = int(tag.split(' ')[1])
+            try:
+                ret_dict['season'] = int(tag.split(' ')[1])
+            except Exception as e:
+                print('Error while parsing season from text: {}'.format(tag))
         elif tag.lower().find('ranked') >= 0:
-            ret_dict['game_type'] = tag.split(' ')[1]
-            ret_dict['ranked'] = tag.find('Ranked') >= 0
+            try:
+                ret_dict['game_type'] = tag.split(' ')[1]
+                ret_dict['ranked'] = tag.find('Ranked') >= 0
+            except Exception as e:
+                print('Error while parsing if ranked from text: {}'.format(tag))
         elif VersusType.is_versus(tag):
-            ret_dict['versus_type'] = VersusType.from_str(tag)
+            try:
+                ret_dict['versus_type'] = VersusType.from_str(tag)
+            except Exception as e:
+                print('Error while parsing versus from text: {}'.format(tag))
 
     tags.map(read_tag)
     return ret_dict
