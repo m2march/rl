@@ -1,0 +1,7 @@
+**/.pytest_cache
+**/*.swp
+**/__pycache__/
+**/*.egg-info
+**/.ipynb_checkpoints
+**/.idea
+
