@@ -1,16 +1,25 @@
-import pyquery as pq
-import requests
-from mypy_extensions import TypedDict
-from typing import *
-from datetime import datetime
-import re
-from enum import Enum
 import functools
+import os
+import re
+import tempfile
+from datetime import datetime
+from enum import Enum
+from typing import *
+
+import carball
+import pandas as pd
+import pyquery as pq
+from carball.analysis.analysis_manager import AnalysisManager
+from carball.analysis.utils import pandas_manager
+from carball.json_parser.game import Game
+
+import requests
 from ballchasing_downloader import ranks
 
 date_fmt = '%Y-%m-%d %H:%M'
 upload_date_re = re.compile('.* \(([\d\-: ]*)\)')
 ballchasing_url_temp = 'https://ballchasing.com/?after={after_id}'
+ballchasing_dl_url = 'https://ballchasing.com/dl/replay/{id}'
 
 class VersusType(Enum):
     DUEL = 1
@@ -136,3 +145,58 @@ def retreive_infos(after_id='') -> List[MatchInfo]:
     all_infos = page('.creplays > li').map(
         lambda i, x: parse_div(pq.PyQuery(x)))
     return all_infos
+
+
+def download_replay(id: str, out_folder: str) -> str:
+    'Downloads the replay and returns the path to the replay file'
+    resp = requests.get(ballchasing_dl_url.format(id=id))
+    replay_path = os.path.join(out_folder, '{}.replay'.format(id))
+    with open(os.path.join(out_folder, '{}.replay'.format(id)), 'wb') as f:
+        f.write(resp.content)
+    return replay_path
+
+
+def convert_replay(replay_path: str, out_folder: str) -> Dict:
+    '''
+    Parses the replay file intro proto and pandas. 
+    
+    Returns a dictionary with keys ['proto', 'pandas'] with the paths
+    to each file.
+    '''
+    id = os.path.splitext(os.path.basename(replay_path))[0]
+    proto_path = os.path.join(out_folder, '{}.pts'.format(id))
+    pandas_path = os.path.join(out_folder, '{}.gzip'.format(id))
+
+    temp_path = tempfile.mktemp(suffix='.json')
+
+    _json = carball.decompile_replay(replay_path, temp_path)
+
+    game = Game()
+    game.initialize(loaded_json=_json)
+    analysis = AnalysisManager(game)
+    analysis.create_analysis()
+
+    with open(proto_path, 'wb') as f:
+        analysis.write_proto_out_to_file(f)
+
+    with open(pandas_path, 'wb') as f:
+        analysis.write_pandas_out_to_file(f)
+
+    return {
+        'proto': proto_path,
+        'pandas': pandas_path
+    }
+
+
+def open_proto(proto_path: str) -> carball.generated.api.game_pb2.Game:
+    with open(proto_path, 'rb') as f:
+        game = carball.generated.api.game_pb2.Game()
+        game.ParseFromString(f.read())
+
+    return game
+
+
+def open_pandas(pandas_path: str) -> pd.DataFrame:
+    with open(pandas_path, 'rb') as f:
+        data_frame = pandas_manager.PandasManager.read_numpy_from_memory(f)
+    return data_frame
