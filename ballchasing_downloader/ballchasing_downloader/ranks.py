@@ -95,7 +95,10 @@ class NumericRank(RLRank):
         try:
             cat_text, sub_text, _, div_text = text.split(' ')
             category = Category.from_string(cat_text)
-            subcategory = NumericRank.__count_i(sub_text)
+            if re.match('\d\d*', sub_text):
+                subcategory = int(sub_text)
+            else:
+                subcategory = NumericRank.__count_i(sub_text)
             division = int(div_text)
         except Exception as e:
             raise RankParsingError(
