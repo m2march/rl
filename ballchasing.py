@@ -1,10 +1,13 @@
 import fire
 import datetime
 import os
+import random
 from tinydb import TinyDB, Query
 import ballchasing_downloader as bd
 from ballchasing_downloader import mapper
 
+replay_out_folder = 'data/replays/'
+replay_conv_folder = 'data/converted/'
 ballchasing_data_folder  = 'data/ballchasing_info/'
 ballchasing_db_file = os.path.join(ballchasing_data_folder, 
                                    'ballchasing.db.json')
@@ -62,6 +65,32 @@ class Ballchasing:
     def clean_db(self):
         os.remove(ballchasing_db_file)
         os.remove(ballchasing_last_update_file)
+
+
+    def download_replays(self):
+        missing_ids = bd.filter_downloaded_ids(replay_out_folder, ballchasing_db_file)
+        for id in missing_ids:
+            bd.download_replay(id, replay_out_folder)
+
+
+    def convert_replays(self, number=10):
+        'Converts {number} random replays into its dataframe and game info'
+        to_convert_ids = bd.filter_converted_ids(replay_out_folder, 
+                                                 replay_conv_folder)
+        if number > 0:
+            to_convert_ids = random.sample(to_convert_ids, k=number)
+
+        with open('converting_errors.log', 'a') as f:
+            for id in to_convert_ids:
+                try:
+                    bd.convert_replay(
+                        os.path.join(replay_out_folder, id + '.replay'),
+                        replay_conv_folder)
+                except Exception as e:
+                    print(ValueError(
+                        'Could not convert replay with id {}'.format(id), e),
+                        file=f
+                    )
 
 
 if __name__ == '__main__':

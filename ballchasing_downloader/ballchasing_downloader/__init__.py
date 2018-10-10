@@ -1,4 +1,6 @@
 import functools
+from tinydb import TinyDB
+import glob
 import os
 import re
 import tempfile
@@ -200,3 +202,36 @@ def open_pandas(pandas_path: str) -> pd.DataFrame:
     with open(pandas_path, 'rb') as f:
         data_frame = pandas_manager.PandasManager.read_numpy_from_memory(f)
     return data_frame
+
+
+def downloaded_ids(downloads_path) -> Set[str]:
+    dl_ids = {
+        os.path.splitext(os.path.basename(filepath))[0]
+        for filepath in glob.glob(os.path.join(downloads_path, '*.replay'))
+    }
+    return dl_ids 
+
+
+def converted_ids(converted_path) -> Set[str]:
+    conv_ids = {
+        os.path.splitext(os.path.basename(filepath))[0]
+        for filepath in glob.glob(os.path.join(converted_path, '*.gzip'))
+        if os.path.isfile(filepath.replace('gzip', 'pts'))
+    }
+    return conv_ids
+
+
+def filter_downloaded_ids(downloads_path, db_path) -> List[str]:
+    dl_ids = downloaded_ids(downloads_path)
+
+    db = TinyDB(db_path)
+    db_ids = {d['id'] for d in db.all()}
+
+    return db_ids - dl_ids 
+
+
+def filter_converted_ids(replays_path, converted_path) -> List[str]:
+    dl_ids = downloaded_ids(replays_path)
+    conv_ids = converted_ids(converted_path)
+
+    return dl_ids - conv_ids
